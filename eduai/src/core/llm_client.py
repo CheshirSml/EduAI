@@ -19,18 +19,35 @@ class LLMClient:
         self.base_url = settings.llm_base_url.rstrip("/")
         self.model_name = settings.llm_model_name
         self._client: Optional[httpx.AsyncClient] = None
+        self.auth = GigaChatAuth()
+        self._access_token: Optional[str] = None
+    
+    async def _get_access_token(self) -> str:
+        """Get valid access token for GigaChat."""
+        if not self._access_token:
+            self._access_token = await self.auth.get_access_token()
+        return self._access_token
     
     async def _get_client(self) -> httpx.AsyncClient:
-        """Get or create HTTP client."""
+        """Get or create HTTP client with current access token."""
+        # Получаем свежий токен
+        access_token = await self._get_access_token()
+        
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(
                 base_url=self.base_url,
                 headers={
-                    "Authorization": f"Bearer {self.api_key}",
+                    "Authorization": f"Bearer {access_token}",
                     "Content-Type": "application/json",
+                    "Accept": "application/json",
                 },
                 timeout=httpx.Timeout(60.0, connect=10.0),
+                verify=False,  # Для работы с самоподписанными сертификатами
             )
+        else:
+            # Обновляем токен в существующем клиенте
+            self._client.headers["Authorization"] = f"Bearer {access_token}"
+        
         return self._client
     
     async def close(self):
