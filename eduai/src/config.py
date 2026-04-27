@@ -9,21 +9,34 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
-    # LLM Configuration
+    # LLM Configuration (GigaChat via Sber API)
+    gigachat_client_id: str = ""
+    gigachat_client_secret: str = ""
+    gigachat_scope: str = "GIGACHAT_API_PERS"
+    gigachat_auth_url: str = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
+    gigachat_chat_url: str = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
+    
+    # Fallback for direct API key usage (if needed in future)
     llm_api_key: str = ""
-    llm_base_url: str = "https://llm.api.cloud.ru/v1"
-    llm_model_name: str = "gigachat"
     
     # Application Settings
-    app_host: str = "0.0.0.0"
-    app_port: int = 8000
+    host: str = "0.0.0.0"
+    port: int = 8000
     log_level: str = "INFO"
     
     # OpenWebUI Compatibility
     enable_streaming: bool = True
     
+    # Homework Checking Parameters
+    homework_checking_interval_minutes: int = 5
+    max_homework_checks_per_day: int = 10
+    
+    # Database (optional for now, but good to have)
+    database_url: str = "sqlite:///./test.db"
+
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields in .env that are not defined here
 
 
 def setup_logging(settings: Settings) -> None:
