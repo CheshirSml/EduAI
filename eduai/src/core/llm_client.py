@@ -1,4 +1,4 @@
-"""LLM Client for Cloud.ru / GigaChat integration with OAuth 2.0."""
+"""LLM Client for Cloud.ru / GigaChat integration."""
 
 import httpx
 import structlog
@@ -7,68 +7,8 @@ from src.config import settings
 from src.models.schemas import ChatMessage, ChatRequest, ChatResponse, Choice, Usage
 import time
 import uuid
-import base64
 
 logger = structlog.get_logger(__name__)
-
-
-class GigaChatAuth:
-    """Handle GigaChat OAuth 2.0 authentication."""
-    
-    def __init__(self):
-        self.client_id = settings.gigachat_client_id
-        self.client_secret = settings.gigachat_client_secret
-        self.scope = "GIGACHAT_API_PERS"
-        self.auth_url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
-        self._access_token: Optional[str] = None
-        self._token_expiry: float = 0
-    
-    def _get_basic_auth(self) -> str:
-        """Create Basic Auth header from client credentials."""
-        credentials = f"{self.client_id}:{self.client_secret}"
-        encoded = base64.b64encode(credentials.encode()).decode()
-        return f"Basic {encoded}"
-    
-    async def get_access_token(self) -> str:
-        """Get or refresh access token."""
-        # Return cached token if still valid (with 5 min buffer)
-        if self._access_token and time.time() < self._token_expiry - 300:
-            return self._access_token
-        
-        logger.info("Requesting new GigaChat access token")
-        
-        headers = {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json",
-            "RqUID": str(uuid.uuid4()),
-            "Authorization": self._get_basic_auth(),
-        }
-        
-        payload = {
-            "scope": self.scope
-        }
-        
-        async with httpx.AsyncClient(verify=False) as client:  # verify=False для самоподписанных сертификатов Сбера
-            try:
-                response = await client.post(self.auth_url, headers=headers, data=payload)
-                response.raise_for_status()
-                data = response.json()
-                
-                self._access_token = data.get("access_token")
-                expires_in = data.get("expires_in", 1800)  # По умолчанию 30 минут
-                self._token_expiry = time.time() + expires_in
-                
-                logger.info("Successfully obtained GigaChat access token", expires_in=expires_in)
-                return self._access_token
-                
-            except httpx.HTTPStatusError as e:
-                logger.error("Failed to get GigaChat access token", 
-                           status_code=e.response.status_code,
-                           response_text=e.response.text)
-                raise
-            except Exception as e:
-                logger.error("Error getting GigaChat access token", error=str(e))
-                raise
 
 
 class LLMClient:
