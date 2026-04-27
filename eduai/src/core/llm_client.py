@@ -12,12 +12,10 @@ logger = structlog.get_logger(__name__)
 
 
 class LLMClient:
-    """Async client for interacting with LLM APIs (OpenAI-compatible)."""
+    """Async client for interacting with LLM APIs (GigaChat via Sber)."""
     
     def __init__(self):
-        self.api_key = settings.llm_api_key
-        self.base_url = settings.llm_base_url.rstrip("/")
-        self.model_name = settings.llm_model_name
+        self.base_url = settings.gigachat_chat_url.rstrip("/")
         self._client: Optional[httpx.AsyncClient] = None
         self.auth = GigaChatAuth()
         self._access_token: Optional[str] = None
@@ -58,7 +56,6 @@ class LLMClient:
     async def chat_completion(
         self,
         messages: list[ChatMessage],
-        model: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
         stream: bool = False,
@@ -68,7 +65,6 @@ class LLMClient:
         
         Args:
             messages: List of chat messages
-            model: Model name to use (defaults to configured model)
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
             stream: Whether to stream the response
@@ -77,7 +73,7 @@ class LLMClient:
             ChatResponse object with the model's response
         """
         client = await self._get_client()
-        model_to_use = model or self.model_name
+        model_to_use = "GigaChat"  # GigaChat model name
         
         payload = {
             "messages": [msg.model_dump() for msg in messages],
@@ -95,7 +91,7 @@ class LLMClient:
                    message_count=len(messages))
         
         try:
-            response = await client.post("/chat/completions", json=payload)
+            response = await client.post("", json=payload)
             response.raise_for_status()
             
             if stream:
@@ -157,7 +153,6 @@ class LLMClient:
     async def chat_completion_stream(
         self,
         messages: list[ChatMessage],
-        model: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
     ) -> AsyncGenerator[str, None]:
@@ -168,7 +163,7 @@ class LLMClient:
             Chunks of text as they are generated
         """
         client = await self._get_client()
-        model_to_use = model or self.model_name
+        model_to_use = "GigaChat"
         
         payload = {
             "messages": [msg.model_dump() for msg in messages],
@@ -183,7 +178,7 @@ class LLMClient:
         logger.info("Starting streaming chat completion", model=model_to_use)
         
         try:
-            async with client.stream("POST", "/chat/completions", json=payload) as response:
+            async with client.stream("POST", "", json=payload) as response:
                 response.raise_for_status()
                 
                 async for line in response.aiter_lines():
