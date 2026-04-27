@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  eduai-core:
+    build: .
+    container_name: eduai-core
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
