@@ -19,9 +19,13 @@ class Settings(BaseSettings):
     # Fallback for direct API key usage (if needed in future)
     llm_api_key: str = ""
     
-    # Application Settings
+    # Application Settings - aliases for compatibility
     host: str = "0.0.0.0"
     port: int = 8000
+    app_host: str = "0.0.0.0"  # Alias for host
+    app_port: int = 8000  # Alias for port
+    llm_model_name: str = "GigaChat"  # Default model name
+    
     log_level: str = "INFO"
     
     # OpenWebUI Compatibility
@@ -33,6 +37,9 @@ class Settings(BaseSettings):
     
     # Database (optional for now, but good to have)
     database_url: str = "sqlite:///./test.db"
+    
+    # Environment
+    environment: str = "development"
 
     class Config:
         env_file = ".env"
