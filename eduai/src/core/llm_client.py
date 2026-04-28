@@ -2,12 +2,14 @@
 
 import httpx
 import structlog
-from typing import AsyncGenerator, Optional
-from src.config import settings
-from src.models.schemas import ChatMessage, ChatRequest, ChatResponse, Choice, Usage
+import base64
 import time
 import uuid
 import json
+from typing import AsyncGenerator, Optional
+
+from src.config import settings
+from src.models.schemas import ChatMessage, ChatRequest, ChatResponse, Choice, Usage
 
 logger = structlog.get_logger(__name__)
 
@@ -47,18 +49,20 @@ class GigaChatAuth:
         
         logger.info("Requesting new access token from Sber OAuth")
         
+        # 🔑 Encode credentials for Basic Auth
+        credentials = f"{self.client_id}:{self.client_secret}"
+        encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+        
         async with httpx.AsyncClient(verify=False) as client:
             try:
                 response = await client.post(
                     self.auth_url,
-                    data={
-                        "client_id": self.client_id,
-                        "client_secret": self.client_secret,
-                        "scope": self.scope,
-                    },
+                    data={"scope": self.scope},
                     headers={
                         "Content-Type": "application/x-www-form-urlencoded",
+                        "Accept": "application/json",
                         "RqUID": str(uuid.uuid4()),
+                        "Authorization": f"Basic {encoded_credentials}",
                     },
                     timeout=30.0,
                 )
@@ -70,8 +74,8 @@ class GigaChatAuth:
                 if not self._access_token:
                     raise ValueError("No access_token in response from Sber OAuth")
                 
-                # Token expires in 30 minutes by default, we'll refresh at 80% of lifetime
-                expires_in = data.get("expires_in", 1800)  # Default 30 minutes
+                # Token expires in ~30 minutes, refresh at 80% of lifetime
+                expires_in = data.get("expires_in", 1800)
                 self._token_expires_at = time.time() + (expires_in * 0.8)
                 
                 logger.info(
@@ -86,9 +90,12 @@ class GigaChatAuth:
                 logger.error(
                     "Authentication failed",
                     status_code=e.response.status_code,
-                    response_text=e.response.text
+                    response_text=e.response.text,
+                    request_url=str(e.request.url),
+                    request_headers={k: v for k, v in e.request.headers.items() if k.lower() != 'authorization'}
                 )
-                raise ValueError(f"Authentication failed: {e.response.status_code}")
+                raise ValueError(f"Authentication failed: {e.response.status_code} - {e.response.text}")
+                
             except httpx.RequestError as e:
                 logger.error("Request error during authentication", error=str(e))
                 raise
@@ -97,21 +104,32 @@ class GigaChatAuth:
 class LLMClient:
     """Async client for interacting with LLM APIs (GigaChat via Sber)."""
     
+    # 🔧 Эндпоинты вынесены как константы класса
+    CHAT_ENDPOINT = "/chat/completions"
+    
     def __init__(self):
-        self.base_url = settings.gigachat_chat_url.rstrip("/")
+        # 🔧 base_url — только домен + версия API, без эндпоинта
+        # Удаляем возможные хвостовые слеши и добавляем /api/v1 если нет
+        raw_url = settings.gigachat_chat_url.rstrip("/")
+        if raw_url.endswith("/api/v1"):
+            self.base_url = raw_url
+        elif raw_url.endswith("/api/v1/chat/completions"):
+            self.base_url = raw_url.replace("/chat/completions", "")
+        else:
+            # Fallback: предполагаем, что это полный URL, извлекаем базу
+            self.base_url = raw_url.rsplit("/", 1)[0] if "/" in raw_url else raw_url
+            
         self._client: Optional[httpx.AsyncClient] = None
         self.auth = GigaChatAuth()
         self._access_token: Optional[str] = None
     
     async def _get_access_token(self) -> str:
         """Get valid access token for GigaChat, refreshing if expired."""
-        # Always check with auth class which handles expiration
         self._access_token = await self.auth.get_access_token()
         return self._access_token
     
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client with current access token."""
-        # Get fresh token (may be cached if still valid)
         access_token = await self._get_access_token()
         
         if self._client is None or self._client.is_closed:
@@ -123,7 +141,7 @@ class LLMClient:
                     "Accept": "application/json",
                 },
                 timeout=httpx.Timeout(60.0, connect=10.0),
-                verify=False,  # For self-signed certificates
+                verify=False,
             )
         else:
             # Update token in existing client
@@ -146,19 +164,9 @@ class LLMClient:
     ) -> ChatResponse:
         """
         Send a chat completion request to the LLM.
-        
-        Args:
-            messages: List of chat messages
-            temperature: Sampling temperature
-            max_tokens: Maximum tokens to generate
-            stream: Whether to stream the response
-            model: Model name to use (optional, defaults to GigaChat)
-            
-        Returns:
-            ChatResponse object with the model's response
         """
         client = await self._get_client()
-        model_to_use = model or "GigaChat"  # Use provided model or default
+        model_to_use = model or "GigaChat"
         
         payload = {
             "messages": [msg.model_dump() for msg in messages],
@@ -173,15 +181,15 @@ class LLMClient:
         logger.info("Sending chat completion request", 
                    model=model_to_use, 
                    stream=stream,
-                   message_count=len(messages))
+                   message_count=len(messages),
+                   endpoint=self.CHAT_ENDPOINT)
         
         try:
-            response = await client.post("", json=payload)
+            # 🔧 Явно указываем путь эндпоинта — это гарантирует корректный URL
+            response = await client.post(self.CHAT_ENDPOINT, json=payload)
             response.raise_for_status()
             
             if stream:
-                # For streaming, we still return a complete response
-                # Streaming is handled separately in the API layer
                 raise ValueError("Streaming should be handled via chat_completion_stream method")
             
             data = response.json()
@@ -226,7 +234,8 @@ class LLMClient:
         except httpx.HTTPStatusError as e:
             logger.error("HTTP error from LLM API", 
                         status_code=e.response.status_code,
-                        response_text=e.response.text)
+                        response_text=e.response.text,
+                        request_url=str(e.request.url))
             raise
         except httpx.RequestError as e:
             logger.error("Request error to LLM API", error=str(e))
@@ -244,15 +253,6 @@ class LLMClient:
     ) -> AsyncGenerator[str, None]:
         """
         Stream a chat completion response.
-        
-        Args:
-            messages: List of chat messages
-            temperature: Sampling temperature
-            max_tokens: Maximum tokens to generate
-            model: Model name to use (optional, defaults to GigaChat)
-        
-        Yields:
-            Chunks of text as they are generated
         """
         client = await self._get_client()
         model_to_use = model or "GigaChat"
@@ -270,10 +270,12 @@ class LLMClient:
         logger.info("Starting streaming chat completion", model=model_to_use)
         
         try:
-            async with client.stream("POST", "", json=payload) as response:
+            # 🔧 Явный путь эндпоинта для стриминга
+            async with client.stream("POST", self.CHAT_ENDPOINT, json=payload) as response:
                 response.raise_for_status()
                 
                 async for line in response.aiter_lines():
+                    # 🔧 Исправлено: проверяем "data: ", а не пробел
                     if line.startswith("data: "):
                         data = line[6:]  # Remove "data: " prefix
                         if data.strip() == "[DONE]":
