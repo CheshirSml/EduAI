@@ -1,0 +1,25 @@
+# EduAI Local Dependencies
+# Минимальные зависимости для локальной версии
+
+# MCP серверы
+fastmcp>=0.4.0
+
+# Мониторинг файловой системы
+watchdog>=2.3.0
+
+# Парсинг файлов
+PyPDF2>=3.0.0
+python-docx>=0.8.11
+chardet>=5.0.0
+
+# Конфигурация
+pydantic-settings>=2.0.0
+
+# Логирование
+structlog>=24.0.0
+
+# Опционально: для работы с llama.cpp-python (альтернатива subprocess)
+# llama-cpp-python>=0.2.0
+
+# Опционально: Comet ML для экспериментов
+# comet_ml>=3.0.0
