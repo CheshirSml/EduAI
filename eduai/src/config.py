@@ -1,6 +1,7 @@
 import logging
 import sys
-from typing import Any
+from pathlib import Path
+from typing import Optional
 
 import structlog
 from pydantic_settings import BaseSettings
@@ -9,24 +10,43 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
-    # LLM Configuration (GigaChat via Sber API)
-    gigachat_client_id: str = ""
-    gigachat_client_secret: str = ""
-    gigachat_scope: str = "GIGACHAT_API_PERS"
-    gigachat_auth_url: str = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
-    gigachat_chat_url: str = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
+    # Корневые пути
+    PROJECT_ROOT: Path = Path(__file__).parent.parent
+    DATA_ROOT: Path = PROJECT_ROOT / "data"
     
-    # Fallback for direct API key usage (if needed in future)
-    llm_api_key: str = ""
+    # Локальные папки
+    SPECS_ROOT: Path = DATA_ROOT / "specs"              # ./data/specs/
+    ASSIGNMENTS_ROOT: Path = DATA_ROOT / "assignments"  # ./data/assignments/
+    MODELS_ROOT: Path = DATA_ROOT / "models"            # ./data/models/
+    LOGS_ROOT: Path = DATA_ROOT / "logs"                # ./data/logs/
+    VECTOR_STORE_ROOT: Path = DATA_ROOT / "vector_store"  # ./data/vector_store/
+    
+    # Модель и инференс
+    DEFAULT_MODEL: str = "Qwen3.5-4B-Q4_K_M.gguf"
+    LLAMA_CPP_PATH: Path = PROJECT_ROOT / "llama.cpp" / "build" / "bin" / "main"
+    GPU_LAYERS: int = 35  # Для RTX 3050
+    CPU_THREADS: int = 6
+    MAX_CONTEXT: int = 4096
+    
+    # Поведение
+    INFERENCE_TIMEOUT: int = 300  # секунд
+    MAX_FILE_SIZE_MB: int = 10
+    WORD_TOLERANCE_PCT: int = 10  # ±10% допуск по объёму
+    
+    # Логирование
+    LOG_LEVEL: str = "INFO"
+    LOG_FILE: Path = LOGS_ROOT / "homework.jsonl"
+    
+    # Опционально: Comet
+    COMET_API_KEY: Optional[str] = None
+    COMET_PROJECT: str = "eduai-local"
     
     # Application Settings - aliases for compatibility
     host: str = "0.0.0.0"
     port: int = 8000
     app_host: str = "0.0.0.0"  # Alias for host
     app_port: int = 8000  # Alias for port
-    llm_model_name: str = "GigaChat"  # Default model name
-    
-    log_level: str = "INFO"
+    llm_model_name: str = "Qwen3.5-4B-Q4_K_M"  # Default local model name
     
     # OpenWebUI Compatibility
     enable_streaming: bool = True
