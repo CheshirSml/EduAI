@@ -12,12 +12,12 @@ import json
 
 from fastmcp import FastMCP
 
-from src.config.settings import settings
-from src.utils.logger import get_logger, setup_logging
-from src.modules.homework.checker.file_parser import FileParser
-from src.modules.homework.checker.validator import AssignmentValidator
-from src.modules.homework.checker.assessor import AssignmentAssessor
-from src.modules.homework.monitor.cache import get_cache, mark_assignment_processed
+from config.settings import settings
+from utils.logger import get_logger, setup_logging
+from modules.homework.checker.file_parser import FileParser
+from modules.homework.checker.validator import AssignmentValidator
+from modules.homework.checker.assessor import AssignmentAssessor
+from modules.homework.monitor.cache import get_cache, mark_assignment_processed
 
 # Инициализация логгера
 setup_logging(log_file=settings.LOG_FILE, log_level=settings.LOG_LEVEL)

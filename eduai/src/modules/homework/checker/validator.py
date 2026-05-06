@@ -6,9 +6,9 @@ from typing import Dict, List, Any
 from datetime import datetime
 import hashlib
 
-from src.config.settings import settings
-from src.utils.logger import get_logger
-from src.modules.homework.checker.file_parser import parse_assignment_file
+from config.settings import settings
+from utils.logger import get_logger
+from modules.homework.checker.file_parser import parse_assignment_file
 
 logger = get_logger(__name__)
 

@@ -1,85 +1,44 @@
 ```
-# Python
-__pycache__/
+# Compiled and build artifacts
 *.pyc
-*.pyo
-*.pyd
-*.py~
-*.py.class
-*.py.backup
-*.swp
-*.swo
-.Python
-env/
-venv/
+__pycache__/
+*.o
+*.obj
+dist/
+build/
+target/
+
+# Dependencies
 .venv/
-ENV/
-env.bak/
-venv.bak/
-.python-version
+venv/
+node_modules/
 .mypy_cache/
 .pytest_cache/
-.coverage
-coverage/
-htmlcov/
-.nox/
-.tox/
-.hypothesis/
 
-# Logs
+# Logs and temp files
 *.log
-logs/
-data/logs/
+*.tmp
+*.swp
+*.swo
 
 # Environment
 .env
 .env.local
-.env.*
-!.env.example
+*.env.*
 
-# Dependencies
-requirements-local.txt
-requirements.txt
-Pipfile
-Pipfile.lock
-poetry.lock
-
-# Build and distribution artifacts
-dist/
-build/
-*.egg-info/
-.eggs/
-.sass-cache/
-.well-known/
-.coverage/
-.coverage.*
-
-# IDE and editor files
+# Editors
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
+
+# System files
 .DS_Store
 Thumbs.db
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-Thumbs.db:encryptable
-
-# Testing
-.pytest_cache/
-.hypothesis/
+# Coverage
+coverage/
+htmlcov/
 .coverage
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git/modules/
+
+# Backup files
+*.bak
 ```

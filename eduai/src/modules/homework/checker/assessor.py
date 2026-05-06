@@ -6,10 +6,10 @@ import re
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
-from src.config.settings import settings
-from src.utils.logger import get_logger
-from src.utils.llm_runner import LLMRunner, MockLLMRunner
-from src.modules.homework.checker.file_parser import parse_assignment_file
+from config.settings import settings
+from utils.logger import get_logger
+from utils.llm_runner import LLMRunner, MockLLMRunner
+from modules.homework.checker.file_parser import parse_assignment_file
 
 logger = get_logger(__name__)
 

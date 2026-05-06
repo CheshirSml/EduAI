@@ -1,5 +1,5 @@
 """Модуль проверки домашних заданий."""
-from src.modules.homework.mcp_server import (
+from modules.homework.mcp_server import (
     get_assignment_spec,
     get_grading_rubric,
     list_pending_assignments,

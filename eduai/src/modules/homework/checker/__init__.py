@@ -1,7 +1,7 @@
 """Компоненты проверки заданий."""
-from src.modules.homework.checker.file_parser import FileParser, parse_assignment_file
-from src.modules.homework.checker.validator import AssignmentValidator, validate_assignment_format
-from src.modules.homework.checker.assessor import AssignmentAssessor, assess_assignment_content
+from modules.homework.checker.file_parser import FileParser, parse_assignment_file
+from modules.homework.checker.validator import AssignmentValidator, validate_assignment_format
+from modules.homework.checker.assessor import AssignmentAssessor, assess_assignment_content
 
 __all__ = [
     "FileParser",

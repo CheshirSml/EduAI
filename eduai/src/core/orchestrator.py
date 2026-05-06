@@ -7,7 +7,7 @@ import time
 from typing import Dict, Any, Optional
 import structlog
 
-from src.core.router import LocalRouter
+from core.router import LocalRouter
 
 logger = structlog.get_logger(__name__)
 

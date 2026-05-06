@@ -9,8 +9,8 @@ import json
 
 from fastmcp import FastMCP
 
-from src.config.settings import settings
-from src.utils.logger import get_logger, setup_logging
+from config.settings import settings
+from utils.logger import get_logger, setup_logging
 
 # Инициализация логгера
 setup_logging(log_file=settings.LOG_FILE, log_level=settings.LOG_LEVEL)

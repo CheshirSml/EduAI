@@ -1,4 +1,4 @@
 """Конфигурация проекта EduAI."""
-from src.config.settings import settings
+from config.settings import settings
 
 __all__ = ["settings"]

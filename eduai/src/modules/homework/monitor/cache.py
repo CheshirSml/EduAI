@@ -8,8 +8,8 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 import hashlib
 
-from src.config.settings import settings
-from src.utils.logger import get_logger
+from config.settings import settings
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
