@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "homework_server": {
+      "command": "python",
+      "args": ["src/modules/homework/mcp_server.py"],
+      "transport": "stdio",
+      "env": {
+        "PYTHONPATH": ".",
+        "LOG_LEVEL": "INFO"
+      }
+    },
+    "specs_server": {
+      "command": "python", 
+      "args": ["src/mcp/specs_server.py"],
+      "transport": "stdio"
+    }
+  }
+}

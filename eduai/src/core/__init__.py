@@ -1,11 +1,5 @@
-"""Core module for EduAI - LLM client and prompt management."""
+"""Ядро системы EduAI."""
+from src.core.router import LocalRouter, SUPPORTED_DOMAINS
+from src.core.orchestrator import LocalOrchestrator
 
-from src.core.llm_client import LLMClient, llm_client
-from src.core.prompt_manager import PromptManager, prompt_manager
-
-__all__ = [
-    "LLMClient",
-    "llm_client",
-    "PromptManager",
-    "prompt_manager",
-]
+__all__ = ["LocalRouter", "SUPPORTED_DOMAINS", "LocalOrchestrator"]
